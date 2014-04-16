@@ -56,6 +56,8 @@ protected:
 	int m_Warmup;
 	int m_RoundCount;
 
+	bool m_ko_race_running;
+
 	int m_GameFlags;
 	int m_UnbalancedTick;
 	bool m_ForceBalanced;
@@ -80,6 +82,9 @@ public:
 	bool IsFriendlyFire(int ClientID1, int ClientID2);
 
 	bool IsForceBalanced();
+
+	bool ko_race_running()
+	{return m_ko_race_running;}
 
 	/*
 

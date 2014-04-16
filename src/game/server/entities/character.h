@@ -114,6 +114,9 @@ private:
 	int m_Health;
 	int m_Armor;
 
+	bool m_is_racing;
+	int m_ko_rounds;
+
 	// ninja
 	struct
 	{

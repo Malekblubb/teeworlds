@@ -39,8 +39,10 @@ CInputCount CountInput(int Prev, int Cur)
 MACRO_ALLOC_POOL_ID_IMPL(CCharacter, MAX_CLIENTS)
 
 // Character, "physical" player's part
-CCharacter::CCharacter(CGameWorld *pWorld)
-: CEntity(pWorld, CGameWorld::ENTTYPE_CHARACTER)
+CCharacter::CCharacter(CGameWorld *pWorld) :
+	CEntity(pWorld, CGameWorld::ENTTYPE_CHARACTER),
+	m_is_racing{false},
+	m_ko_rounds{0}
 {
 	m_ProximityRadius = ms_PhysSize;
 	m_Health = 0;
@@ -732,10 +734,12 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 		return false;
 
 	// m_pPlayer only inflicts half damage on self
-	if(From == m_pPlayer->GetCID())
-		Dmg = max(1, Dmg/2);
+//	if(From == m_pPlayer->GetCID())
+//		Dmg = max(1, Dmg/2);
 
-	m_DamageTaken++;
+//	m_DamageTaken++;
+
+	Dmg = 0;
 
 	// create healthmod indicator
 	if(Server()->Tick() < m_DamageTakenTick+25)

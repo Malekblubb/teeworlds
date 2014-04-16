@@ -243,6 +243,12 @@ void CPlayer::Respawn()
 
 void CPlayer::SetTeam(int Team, bool DoChatMsg)
 {
+	if(this->GameServer()->m_pController->ko_race_running() && Team != TEAM_SPECTATORS)
+	{
+		this->GameServer()->SendBroadcast("You cant join while the race is running. Please wait until the race is finished.", m_ClientID);
+		return;
+	}
+
 	// clamp the team
 	Team = GameServer()->m_pController->ClampTeam(Team);
 	if(m_Team == Team)

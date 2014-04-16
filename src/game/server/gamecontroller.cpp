@@ -10,7 +10,8 @@
 #include "gamecontext.h"
 
 
-IGameController::IGameController(class CGameContext *pGameServer)
+IGameController::IGameController(class CGameContext *pGameServer) :
+	m_ko_race_running{false}
 {
 	m_pGameServer = pGameServer;
 	m_pServer = m_pGameServer->Server();
@@ -136,33 +137,34 @@ bool IGameController::OnEntity(int Index, vec2 Pos)
 		m_aaSpawnPoints[1][m_aNumSpawnPoints[1]++] = Pos;
 	else if(Index == ENTITY_SPAWN_BLUE)
 		m_aaSpawnPoints[2][m_aNumSpawnPoints[2]++] = Pos;
-	else if(Index == ENTITY_ARMOR_1)
-		Type = POWERUP_ARMOR;
-	else if(Index == ENTITY_HEALTH_1)
-		Type = POWERUP_HEALTH;
-	else if(Index == ENTITY_WEAPON_SHOTGUN)
-	{
-		Type = POWERUP_WEAPON;
-		SubType = WEAPON_SHOTGUN;
-	}
+//	else if(Index == ENTITY_ARMOR_1)
+//		Type = POWERUP_ARMOR;
+//	else if(Index == ENTITY_HEALTH_1)
+//		Type = POWERUP_HEALTH;
+//	else if(Index == ENTITY_WEAPON_SHOTGUN)
+//	{
+//		Type = POWERUP_WEAPON;
+//		SubType = WEAPON_SHOTGUN;
+//	}
 	else if(Index == ENTITY_WEAPON_GRENADE)
 	{
 		Type = POWERUP_WEAPON;
 		SubType = WEAPON_GRENADE;
 	}
-	else if(Index == ENTITY_WEAPON_RIFLE)
-	{
-		Type = POWERUP_WEAPON;
-		SubType = WEAPON_RIFLE;
-	}
-	else if(Index == ENTITY_POWERUP_NINJA && g_Config.m_SvPowerups)
-	{
-		Type = POWERUP_NINJA;
-		SubType = WEAPON_NINJA;
-	}
+//	else if(Index == ENTITY_WEAPON_RIFLE)
+//	{
+//		Type = POWERUP_WEAPON;
+//		SubType = WEAPON_RIFLE;
+//	}
+//	else if(Index == ENTITY_POWERUP_NINJA && g_Config.m_SvPowerups)
+//	{
+//		Type = POWERUP_NINJA;
+//		SubType = WEAPON_NINJA;
+//	}
 
 	if(Type != -1)
 	{
+		// ko_race; disallow pickups but grenade
 		CPickup *pPickup = new CPickup(&GameServer()->m_World, Type, SubType);
 		pPickup->m_Pos = Pos;
 		return true;
@@ -209,6 +211,8 @@ static bool IsSeparator(char c) { return c == ';' || c == ' ' || c == ',' || c =
 void IGameController::StartRound()
 {
 	ResetGame();
+
+	m_ko_race_running = true;
 
 	m_RoundStartTick = Server()->Tick();
 	m_SuddenDeath = 0;
@@ -365,7 +369,7 @@ void IGameController::OnCharacterSpawn(class CCharacter *pChr)
 
 	// give default weapons
 	pChr->GiveWeapon(WEAPON_HAMMER, -1);
-	pChr->GiveWeapon(WEAPON_GUN, 10);
+	pChr->SetWeapon(WEAPON_HAMMER); // ko_race
 }
 
 void IGameController::DoWarmup(int Seconds)
@@ -373,7 +377,10 @@ void IGameController::DoWarmup(int Seconds)
 	if(Seconds < 0)
 		m_Warmup = 0;
 	else
+	{
 		m_Warmup = Seconds*Server()->TickSpeed();
+		this->GameServer()->SendBroadcast("Race begins in a few seconds. Join NOW!", -1); // ko_race
+	}
 }
 
 bool IGameController::IsFriendlyFire(int ClientID1, int ClientID2)

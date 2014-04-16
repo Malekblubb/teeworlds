@@ -1080,13 +1080,13 @@ void CGameContext::ConChangeMap(IConsole::IResult *pResult, void *pUserData)
 	pSelf->m_pController->ChangeMap(pResult->NumArguments() ? pResult->GetString(0) : "");
 }
 
-void CGameContext::ConRestart(IConsole::IResult *pResult, void *pUserData)
+void CGameContext::ConRestart(IConsole::IResult*, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	if(pResult->NumArguments())
-		pSelf->m_pController->DoWarmup(pResult->GetInteger(0));
-	else
-		pSelf->m_pController->StartRound();
+//	if(pResult->NumArguments())
+		pSelf->m_pController->DoWarmup(15 /*pResult->GetInteger(0)*/); // ko_race
+//	else
+//		pSelf->m_pController->StartRound();
 }
 
 void CGameContext::ConBroadcast(IConsole::IResult *pResult, void *pUserData)
