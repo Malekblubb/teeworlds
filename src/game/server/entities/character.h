@@ -9,6 +9,8 @@
 
 #include <game/gamecore.h>
 
+#include <string>
+
 enum
 {
 	WEAPON_GAME = -3, // team switching etc
@@ -64,6 +66,10 @@ public:
 	bool IsAlive() const { return m_Alive; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
 
+	// ko_race
+	int ko_round() const noexcept
+	{return m_ko_rounds;}
+
 private:
 	// player controlling this character
 	class CPlayer *m_pPlayer;
@@ -114,8 +120,10 @@ private:
 	int m_Health;
 	int m_Armor;
 
-	bool m_is_racing;
 	int m_ko_rounds;
+	int64 m_round_start;
+	void new_round();
+	std::string round_time();
 
 	// ninja
 	struct

@@ -9,6 +9,10 @@
 #include "laser.h"
 #include "projectile.h"
 
+#include <sstream>
+#include <iomanip>
+
+
 //input count
 struct CInputCount
 {
@@ -41,7 +45,6 @@ MACRO_ALLOC_POOL_ID_IMPL(CCharacter, MAX_CLIENTS)
 // Character, "physical" player's part
 CCharacter::CCharacter(CGameWorld *pWorld) :
 	CEntity(pWorld, CGameWorld::ENTTYPE_CHARACTER),
-	m_is_racing{false},
 	m_ko_rounds{0}
 {
 	m_ProximityRadius = ms_PhysSize;
@@ -578,6 +581,7 @@ void CCharacter::Tick()
 
 	// Previnput
 	m_PrevInput = m_Input;
+
 	return;
 }
 
@@ -601,6 +605,31 @@ void CCharacter::TickDefered()
 	bool StuckAfterMove = GameServer()->Collision()->TestBox(m_Core.m_Pos, vec2(28.0f, 28.0f));
 	m_Core.Quantize();
 	bool StuckAfterQuant = GameServer()->Collision()->TestBox(m_Core.m_Pos, vec2(28.0f, 28.0f));
+
+
+	// ko_race
+	if(this->GameServer()->Collision()->GetCollisionAt(m_Pos.x, m_Pos.y) == TILE_KO_RACE_START)
+	{
+		// check if the player comes from the left side
+		if(m_Pos.x < m_Core.m_Pos.x)
+		{
+			if(m_ko_rounds > 0)
+			{
+				char buf[512];
+				str_format(buf, 512, "%s finished round %i (Time: %s).",
+						   this->Server()->ClientName(this->GetPlayer()->GetCID()),
+						   m_ko_rounds,
+						   this->round_time().c_str());
+				this->GameServer()->SendChat(-1, CGameContext::CHAT_ALL, buf);
+			}
+
+			this->new_round();
+			++m_ko_rounds;
+		}
+
+		m_Core.m_Pos.x += 128;
+	}
+
 	m_Pos = m_Core.m_Pos;
 
 	if(!StuckBefore && (StuckAfterMove || StuckAfterQuant))
@@ -662,6 +691,8 @@ void CCharacter::TickDefered()
 			m_ReckoningCore = m_Core;
 		}
 	}
+
+
 }
 
 void CCharacter::TickPaused()
@@ -676,6 +707,17 @@ void CCharacter::TickPaused()
 		++m_aWeapons[m_ActiveWeapon].m_AmmoRegenStart;
 	if(m_EmoteStop > -1)
 		++m_EmoteStop;
+}
+
+void CCharacter::new_round()
+{m_round_start = time_get();}
+
+std::string CCharacter::round_time()
+{
+	auto dif(time_get() - m_round_start);
+	std::ostringstream strm;
+	strm << std::setfill('0') << std::setw(2) << dif / (1000000 * 60) % 60 << ":" << std::setw(2) << (dif / 1000000) % 60 << "." << dif % 1000000;
+	return strm.str();
 }
 
 bool CCharacter::IncreaseHealth(int Amount)
@@ -733,6 +775,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 	if(GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From) && !g_Config.m_SvTeamdamage)
 		return false;
 
+	// ko_race
 	// m_pPlayer only inflicts half damage on self
 //	if(From == m_pPlayer->GetCID())
 //		Dmg = max(1, Dmg/2);
